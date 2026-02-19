@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 
 from .scanner import VariantScanner
 from .batch import BatchChecker

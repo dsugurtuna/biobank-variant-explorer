@@ -7,11 +7,10 @@ specific genetic variants (by rsID or GRCh38 coordinate) are present.
 from __future__ import annotations
 
 import csv
-import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 
 @dataclass

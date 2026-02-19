@@ -1,7 +1,6 @@
 """Tests for variant_explorer.scanner."""
 
 import csv
-import textwrap
 from pathlib import Path
 
 import pytest

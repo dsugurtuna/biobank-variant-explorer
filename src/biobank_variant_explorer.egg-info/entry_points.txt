@@ -1,0 +1,2 @@
+[console_scripts]
+variant-explorer = variant_explorer.cli:main
