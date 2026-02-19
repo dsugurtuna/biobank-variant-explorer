@@ -1,73 +1,94 @@
-# Biobank Variant Explorer 🧬
+# Biobank Variant Explorer
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
-[![Bash](https://img.shields.io/badge/Language-Bash-blue.svg)](https://www.gnu.org/software/bash/)
-[![Bioinformatics](https://img.shields.io/badge/Domain-Bioinformatics-green.svg)]()
+[![CI](https://github.com/dsugurtuna/biobank-variant-explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/dsugurtuna/biobank-variant-explorer/actions)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![Portfolio](https://img.shields.io/badge/Status-Portfolio_Project-purple.svg)]()
 
-**High-Throughput Variant Discovery Tool for Biobank Genotyping Arrays.**
+High-throughput variant discovery tool that scans PLINK `.bim` files across multiple genotyping arrays to verify whether specific genetic variants are present.
 
-> **Note:** This repository contains sanitized versions of scripts developed during my tenure at **NIHR BioResource**. They are presented here for **educational and portfolio purposes only** to demonstrate proficiency in data quality control and bioinformatics tool development. No real patient data or internal infrastructure paths are included.
-
-The **Biobank Variant Explorer** is a specialized utility designed to audit large-scale genomic data lakes. It recursively scans PLINK binary datasets (`.bim` files) to verify the presence of specific genetic variants across different genotyping arrays and batches.
+> **Portfolio disclaimer:** This repository contains sanitised, generalised versions of tooling developed at NIHR BioResource. No real participant data or internal paths are included.
 
 ---
 
-## 🌟 Use Case: Data Quality & Availability
+## Overview
 
-In a large biobank, samples are often genotyped on different arrays (e.g., Affymetrix, Illumina) over many years. When a researcher asks:
-> *"Do we have coverage for this specific rare variant (rs12345) across all our cohorts?"*
+In a large biobank, samples are genotyped on different arrays over many years. When a researcher asks *"Do we have coverage for rs429358 across all our cohorts?"*, manually checking hundreds of PLINK files is impractical. This tool automates the audit.
 
-Manually checking hundreds of PLINK files is impossible. This tool automates the audit, providing a clear "Yes/No" map of variant availability.
+**Capabilities:**
+- **Deep recursive scan** — traverses complex directory structures to locate all `.bim` files.
+- **Dual-mode lookup** — validates variants by rsID (`rs429358`) or GRCh38 coordinate (`19:44908684`).
+- **Availability matrix** — generates a CSV showing exactly which arrays contain each queried variant.
+- **Batch reporting** — summary statistics including per-array hit counts and overall availability rate.
 
-## 🚀 Key Features
-
-*   **🔍 Deep Recursive Scan**: Traverses complex directory structures to locate all available PLINK datasets.
-*   **⚡ Hybrid Search**: Uses Python for logic and optimized system calls (`grep`/`awk`) for high-speed file parsing.
-*   **📍 Dual-Mode Lookup**: Validates variants by **rsID** (e.g., `rs429358`) OR **Genomic Coordinate** (e.g., `19:45411941`).
-*   **📊 Audit Reports**: Generates detailed CSV matrices showing exactly which arrays contain the target variants.
-
-## 📂 Repository Structure
+## Repository Structure
 
 ```text
 .
-├── variant_scanner.py      # 🧠 Core Logic: The search engine
-├── batch_variant_check.sh  # 🚀 Wrapper: Easy batch execution script
-├── requirements.txt        # 📦 Dependencies
-└── README.md               # 📖 Documentation
+├── src/variant_explorer/       Python package
+│   ├── __init__.py
+│   ├── scanner.py              Core scanning engine
+│   ├── batch.py                Batch checker with reporting
+│   └── cli.py                  Command-line interface
+├── tests/
+│   ├── test_scanner.py
+│   └── test_batch.py
+├── legacy/                     Original scripts
+│   ├── variant_scanner.py
+│   └── batch_variant_check.sh
+├── .github/workflows/ci.yml
+├── pyproject.toml
+├── Dockerfile
+└── Makefile
 ```
 
-## 🛠️ Usage
+## Quick Start
 
-### Prerequisites
-*   Python 3.8+
-*   Standard Unix tools (`grep`, `awk`, `find`)
-
-### 1. Prepare Input
-Create a CSV file with your variants of interest:
-```csv
-dbSNP ID,Coordinate (GRCh38.p13)
-rs429358,19:45411941
-rs7412,19:45412079
-```
-
-### 2. Run the Scan
 ```bash
-# Set your data root (optional, defaults to config)
-export BIOBANK_DATA_ROOT="/path/to/your/genotypes"
-
-# Run the batch check
-./batch_variant_check.sh my_variants.csv
+pip install -e ".[dev]"
 ```
 
-### 3. View Results
-The tool outputs a CSV detailing availability:
-| dbSNP ID | Found_In_Affy | Found_In_Illumina | Details_Affy |
-| :--- | :--- | :--- | :--- |
-| rs429358 | Yes | No | 19 rs429358 0 45411941 T C |
+### CLI
 
-## 🤝 Contributing
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+```bash
+# Scan individual variants
+variant-explorer scan --root-dir /data/genotypes --variants rs429358 rs7412
 
----
-*Developed to ensure data integrity and accessibility in large-scale genomic research.*
+# Scan from CSV
+variant-explorer scan --root-dir /data/genotypes --csv query.csv --output results.csv
+
+# Batch check with summary report
+variant-explorer batch --root-dir /data/genotypes --csv query.csv
+```
+
+### Python API
+
+```python
+from variant_explorer import VariantScanner, BatchChecker
+
+scanner = VariantScanner("/data/genotypes")
+print(scanner.arrays)           # ['CoreExome', 'GSA_v3', ...]
+
+result = scanner.check_variant("rs429358")
+print(result.is_available)      # True
+print(result.array_count)       # 3
+
+# Batch check
+checker = BatchChecker(scanner)
+report = checker.run_from_csv("query.csv")
+print(checker.format_report(report))
+```
+
+## Testing
+
+```bash
+make test   # or: pytest tests/ -v
+```
+
+## Jira Provenance
+
+- **SNP feasibility checking** — verifying variant availability across genotyping arrays before recall study design.
+- **Cross-array auditing** — mapping which arrays and batches carry specific HLA and APOE markers.
+
+## Licence
+
+MIT
